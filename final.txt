@@ -35,7 +35,7 @@
              name: wiki
              host: localhost
              login_user: wiki
-             priv: "*.*:ALL,GRANT"
+             priv: "wikidatabase.*:ALL"
           ignore_errors: yes
         - name: wikidatabase is being created
           mysql_db:
@@ -51,15 +51,17 @@
         - name: Downloading media_wiki
           get_url:
              url: https://releases.wikimedia.org/mediawiki/1.37/mediawiki-1.37.1.tar.gz
-             dest: /etc/div
+             dest: /tmp/mediawiki.tgz
 
 
 
         - name: Unarchiving the file
           unarchive:
-             src: "https://releases.wikimedia.org/mediawiki/1.37/mediawiki-1.37.1.tar.gz"
-             dest: /opt/rh/httpd24/
+             src: /tmp/mediawiki.tgz
+             dest: /opt/mediawiki
              remote_src: yes
+             owner: apache
+             group: apache
           ignore_errors: yes
 
         - name: Opening port 80 for http access
