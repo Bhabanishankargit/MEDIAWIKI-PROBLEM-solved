@@ -1,0 +1,80 @@
+---
+ - hosts: all
+
+   become: yes
+   tasks:
+        - name: Installing Apache
+          yum:
+            name: httpd
+            state: installed
+        - name: Starting Apache
+          service:
+            name: httpd
+            enabled: yes
+            state: started
+        - name: Install mariadb
+          yum:
+            name:
+            - mariadb-server
+            - mariadb-devel
+            - mariadb-connector-odbc
+
+            - mariadb-server-utils
+            - python3-PyMySQL
+            state: latest
+        - name: install php
+          yum:
+            name: php
+            state: latest
+        - name: Starting Mariadb service
+          service:
+             name: mariadb
+             state: started
+        - name: Updating Mariadb server root password
+          mysql_user:
+             name: wiki
+             host: localhost
+             login_user: wiki
+             priv: "*.*:ALL,GRANT"
+          ignore_errors: yes
+        - name: wikidatabase is being created
+          mysql_db:
+             name: wikidatabase
+             state: present
+             login_user: wiki
+             login_password: THISpasswordSHOULDbeCHANGED
+          ignore_errors: yes
+        - name: creating a directory
+          file:
+             path: /etc/div
+             state: directory
+        - name: Downloading media_wiki
+          get_url:
+             url: https://releases.wikimedia.org/mediawiki/1.37/mediawiki-1.37.1.tar.gz
+             dest: /etc/div
+
+
+
+        - name: Unarchiving the file
+          unarchive:
+             src: "https://releases.wikimedia.org/mediawiki/1.37/mediawiki-1.37.1.tar.gz"
+             dest: /opt/rh/httpd24/
+             remote_src: yes
+          ignore_errors: yes
+
+        - name: Opening port 80 for http access
+          firewalld:
+             service: http
+             permanent: true
+             state: enabled
+          ignore_errors: yes
+        - name: Restarting the firewalld service to load in the firewall changes
+          service:
+             name: firewalld
+             state: restarted
+
+        - name: Ensure SELinux is set to disabled mode
+          lineinfile:
+             path: /etc/selinux/config
+             regexp: '^SELINUX='
+             line: SELINUX=disabled
